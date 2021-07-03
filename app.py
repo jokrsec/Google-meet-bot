@@ -3,8 +3,11 @@ import schedule
 import time
 from datetime import datetime
 from update_timetable import schedule_map, location_map
-from config import TIME_FORMAT, testing_start_time, testing_end_time
+from config import *
 from time import sleep
+
+def get_day():
+	return datetime.today().strftime("%A").lower()
 
 def get_period_number():
 	current_time = datetime.now().strftime(TIME_FORMAT)
@@ -27,7 +30,7 @@ def schedule_logout(class_running_time, meet_page):
 	hours, minutes = l[0], l[1]
 	class_running_time = (int(hours) * 60) + int(minutes)
 
-	print("[+] Scheduled logout after {} mintes".format(class_running_time))
+	print("[+] Scheduled logout after {} minte(s)".format(class_running_time))
 	sleep(class_running_time * 60)
 	meet_page.leave()
 
@@ -44,9 +47,40 @@ def join(location, subject, starting_time, ending_time):
 
 	schedule_logout(str(class_running_time), meet_page)
 
+def take_break(break_type):
+
+	start_time = ""
+	end_time = ""
+
+	if break_type == "lunch":
+		print("[+] It's your lunch time.")
+		start_time = LUNCH_BREAK_START_TIME
+		end_time = LUNCH_BREAK_END_TIME
+
+	elif break_type == "sleep":
+		print("[+] Time to stay away from classes.")
+		start_time = SLEEP_START_TIME
+		end_time = SLEEP_END_TIME
+
+	else:
+		print("[+] Yaay! Its sunday.")
+		start_time = CLASS_START_TIME
+		end_time = CLASS_END_TIME
+
+	break_time = datetime.strptime(end_time, TIME_FORMAT) - datetime.strptime(start_time, TIME_FORMAT)
+	l = list(map(int, break_time.split(':')))
+	hours, minutes = l[0], l[1]
+	break_time = (int(hours) * 60) + int(minutes)
+
+	sleep(break_time * 60)
 
 def check_for_class():
-	day = datetime.today().strftime("%A").lower()
+	day = get_day()
+
+	if day == "sunday":
+		take_break("sunday")
+		return
+
 	period_number = get_period_number()
 
 	if period_number == -1:
@@ -55,12 +89,20 @@ def check_for_class():
 
 	print("\n[+] Class is available")
 
-	period = schedule_map[day][period_number]
+	try:
+		period = schedule_map[day][period_number]
+	except:
+		period = schedule_map[day][period_number-1]
+
 	subject = period.subject
 	starting_time = period.starting_time
 	ending_time = period.ending_time
 
-	location = location_map[subject]
+	try:
+		location = location_map[subject]
+	except:
+		print("Add meating links for all subjects.")
+		exit()
 
 	print("\nFetching class details..")
 
@@ -83,17 +125,26 @@ def check_for_class():
 		trail += 1
 
 	else:
-		print("Tutor is not available!")
+		print("Tutor is not available!. Waiting for next class")
+		sleep(30*60)
+
+
 
 def run_schedule():
 
 	print("[+] Schedule initiated.")
+	print("[+] Waiting for classes..")
 
 	schedule.every().day.at("10:00").do(check_for_class)
 	schedule.every().day.at("11:30").do(check_for_class)
 	schedule.every().day.at("15:00").do(check_for_class)
 	schedule.every().day.at("16:30").do(check_for_class)
-	schedule.every().day.at(testing_start_time).do(check_for_class)
+	schedule.every().day.at("12:35").do(take_break, "lunch")
+	schedule.every().day.at("17:40").do(take_break, "sleep")
+
+	if DEV == 1:
+		print("Testing class is scheduled at {} min from now with 1 minute of running time..\n".format(testing_start_time))
+		schedule.every().day.at(testing_start_time).do(check_for_class)
 
 
 	while True:

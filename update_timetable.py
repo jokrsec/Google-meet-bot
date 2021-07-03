@@ -1,4 +1,4 @@
-from config import TIMETABLE_PATH, ACADEMIC_YEAR, testing_start_time, testing_end_time
+from config import *
 import openpyxl
 
 schedule_map = {
@@ -35,8 +35,41 @@ timing_map = {
 }
 
 location_map = {
-	"MOD": "https://meet.google.com/tof-wyre-qga"
+	"DBMS": "https://meet.google.com/jwp-xofc-ykn",
+	"FLAT": "https://meet.google.com/lookup/djfgl425yy?authuser=0&hs=179",
+	"WT": "https://meet.google.com/lookup/eejnnklktc?authuser=0&hs=179",
+	"OR": "https://meet.google.com/lookup/ednwftrdtp?authuser=0&hs=179",
+	"COA": "https://meet.google.com/lookup/cnynyohxn7?authuser=0&hs=179",
+	"Eng-ll": "https://meet.google.com/lookup/eejnnklktc?authuser=0&hs=179",
+	"DBMSL" : "https://meet.google.com/lookup/eeo6ddnvqu?authuser=0&hs=179",
+	"COAL": "https://meet.google.com/lookup/dw2m6w2nlt?authuser=0&hs=179",
+	"WTL": "https://meet.google.com/lookup/eejnnklktc?authuser=0&hs=179",
+	"TEST": testing_meet_link
+
 }
+
+def get_batch_row(batch_no):
+
+	if batch_no < 1 and batch_no > 4:
+		print("Batch number is out of bounds (1-4).")
+		exit()
+
+	row1 = batch_no + 3
+	row2 = batch_no + 10
+	return (row1, row2)
+
+def configure_excel():
+	try:
+		workbook = openpyxl.load_workbook(TIMETABLE_PATH)
+	except FileNotFoundError:
+		print("Timetable not found!")
+
+	if ACADEMIC_YEAR not in ["E1", "E2", "E3", "E4"]:
+		print("Invalid academic year!")
+		exit()
+	return workbook[ACADEMIC_YEAR]
+	
+
 
 class Period():
 	def __init__(self, period, subject, starting_time, ending_time):
@@ -47,13 +80,11 @@ class Period():
 
 
 
-workbook = openpyxl.load_workbook(TIMETABLE_PATH)
-sheet = workbook[ACADEMIC_YEAR]
+sheet = configure_excel()
+row1, row2 = get_batch_row(BATCH_NO)
 
-# l = [col.value for col in sheet[7] if col.value!=None]
-
-for col in sheet[6] + sheet[13]:
-	if col.value != None and not col.value.startswith("BATCH") and not col.value.startswith("CSE"):
+for col in sheet[row1] + sheet[row2]:
+	if col.value != None and not col.value.startswith("BATCH") and not col.value.startswith(BRANCH):
 		try:
 			subject = col.value
 			period = period_map[col.column]
@@ -83,8 +114,7 @@ for col in sheet[6] + sheet[13]:
 			pass
 
 
-# adding test period
-test_period = Period("P5", "MOD", testing_start_time, testing_end_time)
+# adding test period, comment the below code for production
+test_period = Period("P5", "TEST", testing_start_time, testing_end_time)
 schedule_map['saturday'].append(test_period)
 
-print("Testing class is scheduled at {} min from now with 2 minutes of running time..\n".format(testing_start_time))

@@ -47,7 +47,8 @@ class JoinMeet():
 		
 	def leave(self):
 		driver.find_elements_by_css_selector(self.leave_button)[5].click()
-		print("\n[+]Left the class..")
+		print("\n[+] Left the class..")
+		print("\n[+] Scheduled for other classes")
 		sleep(1)
 		driver.close()
 
