@@ -8,7 +8,6 @@ from time import sleep
 driver = webdriver.Firefox(executable_path="./geckodriver")
 action = ActionChains(driver)
 
-meeting_link = "https://accounts.google.com/servicelogin"
 
 class GoogleLoginPage():
 	email = "identifier"
@@ -48,5 +47,8 @@ class JoinMeet():
 		
 	def leave(self):
 		driver.find_elements_by_css_selector(self.leave_button)[5].click()
-		
+		print("\n[+]Left the class..")
+		sleep(1)
+		driver.close()
+
 
